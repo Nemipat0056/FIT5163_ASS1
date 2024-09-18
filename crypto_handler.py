@@ -1,10 +1,10 @@
-import base64
 from cryptography.fernet import Fernet
-from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding, rsa
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+import base64
 
-class SecureEmailCrypto:
+class CryptoHandler:
     def __init__(self, password):
         self.symmetric_key = self.generate_key(password)
         self.fernet = Fernet(self.symmetric_key)
@@ -15,21 +15,27 @@ class SecureEmailCrypto:
         self.public_key = self.private_key.public_key()
 
     def generate_key(self, password):
-        salt = b'salt_'  # In a real application, use a random salt and store it
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
-            salt=salt,
+            salt=b'static_salt',  # In production, use a random salt and store it
             iterations=100000,
         )
-        key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
-        return key
+        return base64.urlsafe_b64encode(kdf.derive(password.encode()))
 
     def encrypt_message(self, message):
         return self.fernet.encrypt(message.encode())
 
     def decrypt_message(self, encrypted_message):
-        return self.fernet.decrypt(encrypted_message).decode()
+        try:
+            print(f"Attempting to decrypt message of length: {len(encrypted_message)}")
+            decrypted = self.fernet.decrypt(encrypted_message)
+            print("Decryption successful")
+            return decrypted.decode()
+        except Exception as e:
+            print(f"Decryption failed: {e}")
+            print(f"Encrypted message (first 100 chars): {encrypted_message[:100]}")
+            raise
 
     def sign_message(self, message):
         signature = self.private_key.sign(
@@ -57,19 +63,12 @@ class SecureEmailCrypto:
         except:
             return False
 
-# Usage example
-if __name__ == "__main__":
-    crypto = SecureEmailCrypto("user_password")
-    message = "Hello, this is a secure email!"
-    encrypted_message = crypto.encrypt_message(message)
-    signature = crypto.sign_message(message.encode())
-    
-    # Simulating sending and receiving
-    received_encrypted_message = encrypted_message
-    received_signature = signature
-    
-    decrypted_message = crypto.decrypt_message(received_encrypted_message)
-    is_authentic = crypto.verify_signature(decrypted_message.encode(), received_signature, crypto.public_key)
-    
-    print(f"Decrypted message: {decrypted_message}")
-    print(f"Signature verified: {is_authentic}")
+    def get_public_key(self):
+        return self.public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo
+        )
+
+    def load_public_key(self, pem_data):
+        return serialization.load_pem_public_key(pem_data)
+
