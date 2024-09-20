@@ -1,4 +1,3 @@
-
 from crypto_handler import CryptoHandler
 from email_handler import EmailHandler
 
@@ -41,5 +40,7 @@ class SecureEmailApp:
                 email['decrypted'] = True
                 email['verified'] = False
             yield email
-            
 
+    @property
+    def trust_list(self):
+        return list(self._trust_list)
