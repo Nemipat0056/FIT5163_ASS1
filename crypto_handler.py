@@ -69,5 +69,10 @@ class CryptoHandler:
             format=serialization.PublicFormat.SubjectPublicKeyInfo
         )
 
+    def load_public_key(self, pem_data):
+        return serialization.load_pem_public_key(pem_data)
+
+
+
    
 
