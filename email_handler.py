@@ -93,6 +93,9 @@ class EmailHandler:
                                 pass
                     except Exception as e:
                         print(f"Error processing email {num}: {e}")
+                except Exception as e:
+                print(f"An error occurred while receiving emails: {e}")
+                return []
         
 
 
