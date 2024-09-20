@@ -41,8 +41,5 @@ class SecureEmailApp:
                 email['decrypted'] = True
                 email['verified'] = False
             yield email
-
-    @property
-    def trust_list(self):
-        return list(self._trust_list)
+            
 
