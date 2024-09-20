@@ -60,19 +60,6 @@ class EmailHandler:
                         print(f"Processing email - Subject: {subject}, From: {sender}")
                         
                         payload = None
-                        if email_message.is_multipart():
-                            for part in email_message.walk():
-                                if part.get_content_type() == "text/plain":
-                                    try:
-                                        payload = json.loads(part.get_payload())
-                                        break
-                                    except json.JSONDecodeError:
-                                        continue
-                        else:
-                            try:
-                                payload = json.loads(email_message.get_payload())
-                            except json.JSONDecodeError:
-                                pass
                         
                         if payload and 'encrypted_body' in payload:
                             yield {
@@ -90,6 +77,20 @@ class EmailHandler:
                                 'body': email_message.get_payload(),
                                 'is_secure': False
                             }
+
+                        if email_message.is_multipart():
+                            for part in email_message.walk():
+                                if part.get_content_type() == "text/plain":
+                                    try:
+                                        payload = json.loads(part.get_payload())
+                                        break
+                                    except json.JSONDecodeError:
+                                        continue
+                        else:
+                            try:
+                                payload = json.loads(email_message.get_payload())
+                            except json.JSONDecodeError:
+                                pass
                     except Exception as e:
                         print(f"Error processing email {num}: {e}")
         
